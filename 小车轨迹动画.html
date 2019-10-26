@@ -1,0 +1,204 @@
+<!--
+ * @Descripttion:  
+ * @Date: 2019-10-11 21:57:28
+ * @LastEditors: tande
+ * @LastEditTime: 2019-10-26 10:11:50
+ -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>轨迹动画</title>
+    <link href="css/ol.css" rel="stylesheet" type="text/css" />
+    <script src="js/ol-debug.js"></script>
+    <style>
+      * {
+        padding: 0px;
+        margin: 0px;
+      }
+
+      #animation {
+        z-index: 5000;
+        position: absolute;
+        left: 150px;
+        top: 25px;
+      }
+
+      #stop {
+        z-index: 5000;
+        position: absolute;
+        left: 250px;
+        top: 25px;
+      }
+
+      #css_animation {
+        height: 50px;
+        width: 50px;
+        border-radius: 200px;
+        background: rgba(255, 0, 0, 0.9);
+        transform: scale(0);
+        animation: myfirst 3s infinite;
+        /*将动画与div元素绑定/
+      /* animation-iteration-count: infinite; */
+      }
+
+      @keyframes myfirst {
+        to {
+          transform: scale(2);
+          background: rgba(0, 0, 0, 0);
+        }
+      }
+
+      html,
+      body,
+      #map {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="map">
+      <button id="animation">开始</button>
+      <button id="stop">停止</button>
+      <div id="css_animation"></div>
+    </div>
+
+    <script>
+      var layer = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url:
+            'http://www.google.cn/maps/vt?pb=!1m5!1m4!1i{z}!2i{x}!3i{y}!4i256!2m3!1e0!2sm!3i342009817!3m9!2szh-CN!3sCN!5e18!12m1!1e47!12m3!1e37!2m1!1ssmartmaps!4e0&token=32965'
+        })
+      })
+      var vector = new ol.layer.Vector({
+        source: new ol.source.Vector()
+      })
+
+      var vector2 = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        style: new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: '#FF504b',
+            width: 2
+          })
+        })
+      })
+
+      var view = new ol.View({
+        center: new ol.proj.fromLonLat([120, 33]),
+        zoom: 5
+      })
+      var map = new ol.Map({
+        layers: [layer, vector, vector2],
+        view: view,
+        target: 'map',
+        logo: false
+      })
+
+      var lineF = [
+        new ol.proj.fromLonLat([110, 22]),
+        new ol.proj.fromLonLat([110, 32]),
+        new ol.proj.fromLonLat([130, 32]),
+        new ol.proj.fromLonLat([130, 22]),
+        new ol.proj.fromLonLat([145, 39]),
+        new ol.proj.fromLonLat([140, 32]),
+        new ol.proj.fromLonLat([110, 22]),
+        new ol.proj.fromLonLat([110, 29]),
+        new ol.proj.fromLonLat([110, 28]),
+        new ol.proj.fromLonLat([111, 28]),
+        new ol.proj.fromLonLat([111, 20]),
+        new ol.proj.fromLonLat([113, 20]),
+        new ol.proj.fromLonLat([113, 21]),
+        new ol.proj.fromLonLat([114, 20]),
+        new ol.proj.fromLonLat([115, 20]),
+        new ol.proj.fromLonLat([116, 20])
+      ]
+      //原定路线
+      var fastLine = new ol.Feature({
+        geometry: new ol.geom.LineString(lineF)
+      })
+      vector.getSource().addFeature(fastLine)
+
+      //小车图标
+      var point = new ol.Feature({
+        geometry: new ol.geom.Point(new ol.proj.fromLonLat([110, 22]))
+      })
+      point.setStyle(
+        new ol.style.Style({
+          image: new ol.style.Icon({
+            src: 'image/car.png',
+            rotateWithView: true,
+            scale: 0.8
+          }),
+          zIndex: 10
+        })
+      )
+      vector.getSource().addFeature(point)
+
+      var step = 0.01,
+        requestID
+      const geojsonFormat = new ol.format.GeoJSON()
+
+      function animation(step) {
+        requestID = window.requestAnimationFrame(function() {
+          if (step <= 1) {
+            var second = fastLine.getGeometry().getCoordinateAt(step)
+            var first = point.getGeometry().getCoordinates()
+            var angle = -Math.atan2(second[1] - first[1], second[0] - first[0])
+
+            point
+              .getGeometry()
+              .setCoordinates(fastLine.getGeometry().getCoordinateAt(step))
+            point
+              .getStyle()
+              .getImage()
+              .setRotation(angle)
+
+            let coord = []
+            coord.push(first)
+            coord.push(second)
+            var Tempfeature = new ol.Feature({
+              geometry: new ol.geom.LineString(coord)
+            })
+            vector2.getSource().addFeature(Tempfeature)
+            step = step + 0.0003
+            animation(step)
+          } else {
+            var second = ol.proj.fromLonLat([111, 20])
+            var first = point.getGeometry().getCoordinates()
+            var angle = -Math.atan2(second[1] - first[1], second[0] - first[0])
+            point.getGeometry().setCoordinates(second)
+            point
+              .getStyle()
+              .getImage()
+              .setRotation(angle)
+            let coord = []
+            coord.push(first)
+            coord.push(second)
+            var Tempfeature = new ol.Feature({
+              geometry: new ol.geom.LineString(coord)
+            })
+            vector2.getSource().addFeature(Tempfeature)
+          }
+        }, 1)
+      }
+
+      document.getElementById('animation').onclick = function() {
+        animation(step)
+      }
+      document.getElementById('stop').onclick = function() {
+        cancelAnimationFrame(requestID)
+      }
+
+      var pointEnd = document.createElement('div')
+      var overlayEnd = new ol.Overlay({
+        element: document.getElementById('css_animation'),
+        positioning: 'center-center'
+      })
+      map.addOverlay(overlayEnd)
+      var coords = new ol.proj.fromLonLat([113, 21])
+      overlayEnd.setPosition(coords)
+    </script>
+  </body>
+</html>
