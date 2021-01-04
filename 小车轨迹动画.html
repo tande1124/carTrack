@@ -8,8 +8,8 @@
 <html>
   <head>
     <title>轨迹动画</title>
-    <link href="css/ol.css" rel="stylesheet" type="text/css" />
-    <script src="js/ol-debug.js"></script>
+    <link href="ol/ol.css" rel="stylesheet" type="text/css" />
+    <script src="ol/ol.js"></script>
     <style>
       * {
         padding: 0px;
@@ -68,7 +68,7 @@
       var layer = new ol.layer.Tile({
         source: new ol.source.XYZ({
           url:
-            'http://www.google.cn/maps/vt?pb=!1m5!1m4!1i{z}!2i{x}!3i{y}!4i256!2m3!1e0!2sm!3i342009817!3m9!2szh-CN!3sCN!5e18!12m1!1e47!12m3!1e37!2m1!1ssmartmaps!4e0&token=32965'
+            'http://t{0-7}.tianditu.com/DataServer?T=vec_w&X={x}&Y={y}&L={z}&tk=4f62e1d82bd46e2ff470b291c2260156'
         })
       })
       var vector = new ol.layer.Vector({
